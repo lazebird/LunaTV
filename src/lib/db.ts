@@ -1,6 +1,7 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 import { AdminConfig } from './admin.types';
+import { CloudflareKVStorage } from './cf-kv.db';
 import { KvrocksStorage } from './kvrocks.db';
 import { RedisStorage } from './redis.db';
 import { Favorite, IStorage, PlayRecord, SkipConfig } from './types';
@@ -13,7 +14,14 @@ const STORAGE_TYPE =
     | 'redis'
     | 'upstash'
     | 'kvrocks'
+    | 'cf-kv'
     | undefined) || 'localstorage';
+
+let kvNamespace: KVNamespace | null = null;
+
+export function setKVNamespace(kv: KVNamespace) {
+  kvNamespace = kv;
+}
 
 // 创建存储实例
 function createStorage(): IStorage {
@@ -24,6 +32,11 @@ function createStorage(): IStorage {
       return new UpstashRedisStorage();
     case 'kvrocks':
       return new KvrocksStorage();
+    case 'cf-kv':
+      if (!kvNamespace) {
+        throw new Error('KV Namespace not initialized for cf-kv storage');
+      }
+      return new CloudflareKVStorage(kvNamespace);
     case 'localstorage':
     default:
       return null as unknown as IStorage;
@@ -34,9 +47,18 @@ function createStorage(): IStorage {
 let storageInstance: IStorage | null = null;
 
 function getStorage(): IStorage {
-  if (!storageInstance) {
-    storageInstance = createStorage();
+  if (storageInstance) {
+    return storageInstance;
   }
+
+  // 在 Next.js build 阶段，process.env.NEXT_PUBLIC_STORAGE_TYPE 可能是 'cf-kv'
+  // 但此时 kvNamespace 还未被初始化，所以 createStorage() 会抛出错误
+  // 因此，我们在这里添加一个检查，如果是在 build 阶段，并且是 'cf-kv'，则返回一个假的 storage 实例
+  if (process.env.npm_lifecycle_event === 'build' && STORAGE_TYPE === 'cf-kv') {
+    return null as unknown as IStorage;
+  }
+
+  storageInstance = createStorage();
   return storageInstance;
 }
 

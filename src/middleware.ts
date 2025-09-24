@@ -3,9 +3,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { setKVNamespace } from '@/lib/db';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // 在 Cloudflare Pages 中设置 KV namespace
+  if (
+    process.env.NEXT_PUBLIC_STORAGE_TYPE === 'cf-kv' &&
+    (process.env as any).LUNATV_KV
+  ) {
+    setKVNamespace((process.env as any).LUNATV_KV);
+  }
 
   // 跳过不需要认证的路径
   if (shouldSkipAuth(pathname)) {
@@ -14,11 +23,7 @@ export async function middleware(request: NextRequest) {
 
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
 
-  if (!process.env.PASSWORD) {
-    // 如果没有设置密码，重定向到警告页面
-    const warningUrl = new URL('/warning', request.url);
-    return NextResponse.redirect(warningUrl);
-  }
+  const password = process.env.PASSWORD || 'admin';
 
   // 从cookie获取认证信息
   const authInfo = getAuthInfoFromCookie(request);
@@ -29,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
   // localstorage模式：在middleware中完成验证
   if (storageType === 'localstorage') {
-    if (!authInfo.password || authInfo.password !== process.env.PASSWORD) {
+    if (!authInfo.password || authInfo.password !== password) {
       return handleAuthFailure(request, pathname);
     }
     return NextResponse.next();
@@ -46,7 +51,7 @@ export async function middleware(request: NextRequest) {
     const isValidSignature = await verifySignature(
       authInfo.username,
       authInfo.signature,
-      process.env.PASSWORD || ''
+      password
     );
 
     // 签名验证通过即可

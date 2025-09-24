@@ -56,3 +56,28 @@ export class SimpleCrypto {
     }
   }
 }
+
+// 使用 PBKDF2 和 salt 来增强密码安全性
+export async function hashPassword(password: string): Promise<string> {
+  const salt = CryptoJS.lib.WordArray.random(128 / 8).toString();
+  const hash = CryptoJS.PBKDF2(password, salt, {
+    keySize: 256 / 32,
+    iterations: 1000,
+  }).toString();
+  return `${salt}:${hash}`;
+}
+
+export async function verifyPassword(
+  password: string,
+  storedHash: string
+): Promise<boolean> {
+  const [salt, hash] = storedHash.split(':');
+  if (!salt || !hash) {
+    return false; // or throw an error
+  }
+  const hashToVerify = CryptoJS.PBKDF2(password, salt, {
+    keySize: 256 / 32,
+    iterations: 1000,
+  }).toString();
+  return hash === hashToVerify;
+}

@@ -56,10 +56,10 @@ async function generateAuthCookie(
     authData.password = password;
   }
 
-  if (username && process.env.PASSWORD) {
+  if (username && (process.env.PASSWORD || 'admin')) {
     authData.username = username;
     // 使用密码作为密钥对用户名进行签名
-    const signature = await generateSignature(username, process.env.PASSWORD);
+    const signature = await generateSignature(username, (process.env.PASSWORD || 'admin'));
     authData.signature = signature;
     authData.timestamp = Date.now(); // 添加时间戳防重放攻击
   }
@@ -71,23 +71,7 @@ export async function POST(req: NextRequest) {
   try {
     // 本地 / localStorage 模式——仅校验固定密码
     if (STORAGE_TYPE === 'localstorage') {
-      const envPassword = process.env.PASSWORD;
-
-      // 未配置 PASSWORD 时直接放行
-      if (!envPassword) {
-        const response = NextResponse.json({ ok: true });
-
-        // 清除可能存在的认证cookie
-        response.cookies.set('auth', '', {
-          path: '/',
-          expires: new Date(0),
-          sameSite: 'lax', // 改为 lax 以支持 PWA
-          httpOnly: false, // PWA 需要客户端可访问
-          secure: false, // 根据协议自动设置
-        });
-
-        return response;
-      }
+      const envPassword = process.env.PASSWORD || 'admin';
 
       const { password } = await req.json();
       if (typeof password !== 'string') {
@@ -135,8 +119,8 @@ export async function POST(req: NextRequest) {
 
     // 可能是站长，直接读环境变量
     if (
-      username === process.env.USERNAME &&
-      password === process.env.PASSWORD
+      username === (process.env.USERNAME || 'admin') &&
+      password === (process.env.PASSWORD || 'admin')
     ) {
       // 验证成功，设置认证cookie
       const response = NextResponse.json({ ok: true });
@@ -158,7 +142,7 @@ export async function POST(req: NextRequest) {
       });
 
       return response;
-    } else if (username === process.env.USERNAME) {
+    } else if (username === (process.env.USERNAME || 'admin')) {
       return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
     }
 

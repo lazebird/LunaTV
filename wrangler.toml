@@ -1,0 +1,9 @@
+name = "lunatv"
+workers_dev = true
+
+kv_namespaces = [
+  { binding = "LUNATV_KV", id = "0e5a71eeb4ed4028991860be64db207e" }, # TODO: Replace with your KV namespace ID
+]
+
+[site]
+bucket = ".next"
