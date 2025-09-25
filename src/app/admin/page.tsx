@@ -14,3 +14,5 @@ export default function AdminPage() {
     </React.Suspense>
   );
 }
+
+export const runtime = 'edge';

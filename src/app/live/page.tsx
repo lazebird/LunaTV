@@ -1609,3 +1609,5 @@ export default function LivePage() {
     </Suspense>
   );
 }
+
+export const runtime = 'edge';

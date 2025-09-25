@@ -820,3 +820,5 @@ export default function DoubanPage() {
     </Suspense>
   );
 }
+
+export const runtime = 'edge';

@@ -1833,3 +1833,5 @@ export default function PlayPage() {
     </Suspense>
   );
 }
+
+export const runtime = 'edge';

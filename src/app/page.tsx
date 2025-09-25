@@ -521,3 +521,5 @@ export default function Home() {
     </Suspense>
   );
 }
+
+export const runtime = 'edge';
