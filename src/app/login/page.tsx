@@ -109,8 +109,8 @@ function LoginPageClient() {
       } else if (res.status === 401) {
         setError('密码错误');
       } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? '服务器错误');
+  const data = (await res.json().catch(() => ({}))) as any;
+  setError(data.error ?? '服务器错误');
       }
     } catch (error) {
       setError('网络错误，请稍后重试');

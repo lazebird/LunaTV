@@ -238,7 +238,7 @@ function LivePageClient() {
         throw new Error('获取直播源失败');
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as any;
       if (!result.success) {
         throw new Error(result.error || '获取直播源失败');
       }
@@ -300,7 +300,7 @@ function LivePageClient() {
         throw new Error('获取频道列表失败');
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as any;
       if (!result.success) {
         throw new Error(result.error || '获取频道列表失败');
       }
@@ -475,7 +475,7 @@ function LivePageClient() {
         setIsEpgLoading(true); // 开始加载 EPG 数据
         const response = await fetch(`/api/live/epg?source=${currentSource.key}&tvgId=${channel.tvgId}`);
         if (response.ok) {
-          const result = await response.json();
+          const result = (await response.json()) as any;
           if (result.success) {
             // 清洗EPG数据，去除重叠的节目
             const cleanedData = {
@@ -873,7 +873,7 @@ function LivePageClient() {
         console.error('预检查失败:', precheckResponse.statusText);
         return;
       }
-      const precheckResult = await precheckResponse.json();
+      const precheckResult = (await precheckResponse.json()) as any;
       if (precheckResult.success) {
         type = precheckResult.type;
       }

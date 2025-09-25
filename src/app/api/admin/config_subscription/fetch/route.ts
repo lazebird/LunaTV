@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { url } = await request.json();
+    const { url } = (await request.json()) as any;
 
     if (!url) {
       return NextResponse.json({ error: '缺少URL参数' }, { status: 400 });
@@ -53,14 +53,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       configContent: decodedContent,
-      message: '配置拉取成功'
+      message: '配置拉取成功',
     });
-
   } catch (error) {
     console.error('拉取配置失败:', error);
-    return NextResponse.json(
-      { error: '拉取配置失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '拉取配置失败' }, { status: 500 });
   }
 }

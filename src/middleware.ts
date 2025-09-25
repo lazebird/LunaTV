@@ -9,11 +9,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 在 Cloudflare Pages 中设置 KV namespace
-  if (
-    process.env.NEXT_PUBLIC_STORAGE_TYPE === 'cf-kv' &&
-    (process.env as any).LUNATV_KV
-  ) {
-    setKVNamespace((process.env as any).LUNATV_KV);
+  if (process.env.NEXT_PUBLIC_STORAGE_TYPE === 'cf-kv') {
+    const env = process.env as Record<string, string | undefined>;
+    if (env.LUNATV_KV) {
+      const kv = env.LUNATV_KV as unknown as KVNamespace;
+      setKVNamespace(kv);
+    }
   }
 
   // 跳过不需要认证的路径

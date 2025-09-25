@@ -194,7 +194,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = (await response.json().catch(() => ({}))) as any;
         throw new Error(errorData.error || `导出失败: ${response.status}`);
       }
 
@@ -277,7 +277,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
         body: formData,
       });
 
-      const result = await response.json();
+  const result = (await response.json()) as any;
 
       if (!response.ok) {
         throw new Error(result.error || `导入失败: ${response.status}`);

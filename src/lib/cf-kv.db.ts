@@ -1,7 +1,6 @@
-
-import { Favorite, IStorage, PlayRecord, SkipConfig } from './types';
 import { AdminConfig } from './admin.types';
 import { hashPassword, verifyPassword } from './crypto';
+import { Favorite, IStorage, PlayRecord, SkipConfig } from './types';
 
 export class CloudflareKVStorage implements IStorage {
   private kv: KVNamespace;
@@ -10,7 +9,10 @@ export class CloudflareKVStorage implements IStorage {
     this.kv = kv;
   }
 
-  async getPlayRecord(userName: string, key: string): Promise<PlayRecord | null> {
+  async getPlayRecord(
+    userName: string,
+    key: string
+  ): Promise<PlayRecord | null> {
     const value = await this.kv.get(`playrecord:${userName}:${key}`);
     return value ? JSON.parse(value) : null;
   }
@@ -20,10 +22,7 @@ export class CloudflareKVStorage implements IStorage {
     key: string,
     record: PlayRecord
   ): Promise<void> {
-    await this.kv.put(
-      `playrecord:${userName}:${key}`,
-      JSON.stringify(record)
-    );
+    await this.kv.put(`playrecord:${userName}:${key}`, JSON.stringify(record));
   }
 
   async getAllPlayRecords(
@@ -102,7 +101,9 @@ export class CloudflareKVStorage implements IStorage {
   async deleteUser(userName: string): Promise<void> {
     await this.kv.delete(`user:${userName}`);
     // also delete other user data
-    const playRecords = await this.kv.list({ prefix: `playrecord:${userName}:` });
+    const playRecords = await this.kv.list({
+      prefix: `playrecord:${userName}:`,
+    });
     for (const key of playRecords.keys) {
       await this.kv.delete(key.name);
     }
@@ -111,7 +112,9 @@ export class CloudflareKVStorage implements IStorage {
       await this.kv.delete(key.name);
     }
     await this.kv.delete(`searchhistory:${userName}`);
-    const skipConfigs = await this.kv.list({ prefix: `skipconfig:${userName}:` });
+    const skipConfigs = await this.kv.list({
+      prefix: `skipconfig:${userName}:`,
+    });
     for (const key of skipConfigs.keys) {
       await this.kv.delete(key.name);
     }
@@ -125,20 +128,14 @@ export class CloudflareKVStorage implements IStorage {
   async addSearchHistory(userName: string, keyword: string): Promise<void> {
     let history = await this.getSearchHistory(userName);
     history = [keyword, ...history.filter((k) => k !== keyword)].slice(0, 20);
-    await this.kv.put(
-      `searchhistory:${userName}`,
-      JSON.stringify(history)
-    );
+    await this.kv.put(`searchhistory:${userName}`, JSON.stringify(history));
   }
 
   async deleteSearchHistory(userName: string, keyword?: string): Promise<void> {
     if (keyword) {
       let history = await this.getSearchHistory(userName);
       history = history.filter((k) => k !== keyword);
-      await this.kv.put(
-        `searchhistory:${userName}`,
-        JSON.stringify(history)
-      );
+      await this.kv.put(`searchhistory:${userName}`, JSON.stringify(history));
     } else {
       await this.kv.delete(`searchhistory:${userName}`);
     }

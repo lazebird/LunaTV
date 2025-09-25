@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -48,8 +49,8 @@ export default function SearchSuggestions({
         }
       );
       if (response.ok) {
-        const data = await response.json();
-        const apiSuggestions = data.suggestions.map(
+  const data = (await response.json()) as any;
+  const apiSuggestions = data.suggestions.map(
           (item: { text: string }) => ({
             text: item.text,
             type: 'related' as const,

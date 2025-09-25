@@ -531,7 +531,7 @@ function SearchPageClient() {
         // 传统搜索：使用普通接口
         fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
           .then(response => response.json())
-          .then(data => {
+            .then((data: any) => {
             if (currentQueryRef.current !== trimmed) return;
 
             if (data.results && Array.isArray(data.results)) {
