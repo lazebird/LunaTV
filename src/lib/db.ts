@@ -3,6 +3,7 @@
 import { AdminConfig } from './admin.types';
 import { CloudflareKVStorage } from './cf-kv.db';
 import { KvrocksStorage } from './kvrocks.db';
+import NoopStorage from './noopStorage';
 import { RedisStorage } from './redis.db';
 import { Favorite, IStorage, PlayRecord, SkipConfig } from './types';
 import { UpstashRedisStorage } from './upstash.db';
@@ -34,7 +35,8 @@ function createStorage(): IStorage {
       return new KvrocksStorage();
     case 'cf-kv':
       if (!kvNamespace) {
-        throw new Error('KV Namespace not initialized for cf-kv storage');
+        // 在构建或运行时绑定尚未建立时，返回一个 noop 实现，避免抛出
+        return new NoopStorage();
       }
       return new CloudflareKVStorage(kvNamespace);
     case 'localstorage':
