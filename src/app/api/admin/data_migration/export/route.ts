@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { promisify } from 'util';
-import { gzip } from 'zlib';
+import pako from 'pako';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
+import { uint8ArrayToBase64 } from '@/lib/encoding';
 import { CURRENT_VERSION } from '@/lib/version';
 
-export const runtime = 'nodejs';
-
-const gzipAsync = promisify(gzip);
+export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
@@ -92,14 +90,12 @@ export async function POST(req: NextRequest) {
     // 将数据转换为JSON字符串
     const jsonData = JSON.stringify(exportData);
 
-    // 先压缩数据
-    const compressedData = await gzipAsync(jsonData);
+    // 先使用 pako 压缩数据（返回 Uint8Array）
+    const compressed = pako.gzip(jsonData) as Uint8Array;
+    const base64Compressed = uint8ArrayToBase64(compressed);
 
     // 使用提供的密码加密压缩后的数据
-    const encryptedData = SimpleCrypto.encrypt(
-      compressedData.toString('base64'),
-      password
-    );
+    const encryptedData = SimpleCrypto.encrypt(base64Compressed, password);
 
     // 生成文件名
     const now = new Date();

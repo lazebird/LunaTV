@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { promisify } from 'util';
-import { gunzip } from 'zlib';
+import pako from 'pako';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
+import { base64ToUint8Array } from '@/lib/encoding';
 
-export const runtime = 'nodejs';
-
-const gunzipAsync = promisify(gunzip);
+export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
@@ -65,10 +63,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 解压缩数据
-    const compressedBuffer = Buffer.from(decryptedData, 'base64');
-    const decompressedBuffer = await gunzipAsync(compressedBuffer);
-    const decompressedData = decompressedBuffer.toString();
+    // 解压缩数据（base64 -> Uint8Array -> pako.ungzip -> string）
+    const compressedBytes = base64ToUint8Array(decryptedData);
+    const decompressedBytes = pako.ungzip(compressedBytes) as Uint8Array;
+    const decompressedData = new TextDecoder().decode(decompressedBytes);
 
     // 解析JSON数据
     let importData: any;
