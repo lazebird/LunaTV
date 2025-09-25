@@ -74,7 +74,7 @@ LunaTV 现已支持在 Cloudflare Pages 上部署，使用 Cloudflare KV 作为�
 1. 在 Cloudflare 控制台中创建一个新的 Pages 项目
 2. 连接到你的 GitHub 仓库
 3. 配置以下构建设置：
-   - 构建命令: `pnpm build`
+   - 构建命令: `pnpm install --frozen-lockfile && pnpm run pages:build`
    - 构建输出目录: `.next`
 4. 添加环境变量：
    - `NEXT_PUBLIC_STORAGE_TYPE` = `cf-kv`
@@ -96,15 +96,15 @@ LunaTV 现已支持在 Cloudflare Pages 上部署，使用 Cloudflare KV 作为�
 
 无论使用哪种部署方式，都需要配置以下环境变量：
 
-| 变量名 | 必需 | 描述 |
-|--------|------|------|
-| USERNAME | 是 | 管理员用户名 |
-| PASSWORD | 是 | 管理员密码 |
-| NEXT_PUBLIC_STORAGE_TYPE | 否 | 存储类型 (localstorage, redis, upstash, kvrocks, cf-kv) |
-| REDIS_URL | 否 | Redis 连接 URL (使用 Redis 存储时) |
-| UPSTASH_REDIS_URL | 否 | Upstash Redis URL (使用 Upstash 存储时) |
-| UPSTASH_REDIS_TOKEN | 否 | Upstash Redis Token (使用 Upstash 存储时) |
-| KVROCKS_URL | 否 | Kvrocks 连接 URL (使用 Kvrocks 存储时) |
+| 变量名                   | 必需 | 描述                                                    |
+| ------------------------ | ---- | ------------------------------------------------------- |
+| USERNAME                 | 是   | 管理员用户名                                            |
+| PASSWORD                 | 是   | 管理员密码                                              |
+| NEXT_PUBLIC_STORAGE_TYPE | 否   | 存储类型 (localstorage, redis, upstash, kvrocks, cf-kv) |
+| REDIS_URL                | 否   | Redis 连接 URL (使用 Redis 存储时)                      |
+| UPSTASH_REDIS_URL        | 否   | Upstash Redis URL (使用 Upstash 存储时)                 |
+| UPSTASH_REDIS_TOKEN      | 否   | Upstash Redis Token (使用 Upstash 存储时)               |
+| KVROCKS_URL              | 否   | Kvrocks 连接 URL (使用 Kvrocks 存储时)                  |
 
 ## 4. 存储后端选择
 
