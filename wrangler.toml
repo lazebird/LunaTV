@@ -10,3 +10,8 @@ kv_namespaces = [
 
 # The output dir produced by next-on-pages / vercel adapter
 pages_build_output_dir = ".vercel/output/static"
+
+# Ensure Node.js compatibility flag is set for the produced Worker.
+# Putting this in the repository's wrangler.toml makes the setting persistent
+# across deployments (UI changes may be overwritten by repo config).
+compatibility_flags = ["nodejs_compat"]
