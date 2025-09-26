@@ -93,7 +93,10 @@ async function createStorageAsync(): Promise<IStorage> {
       return new CloudflareKVStorage(kvNamespace);
     case 'localstorage':
     default:
-      return null as unknown as IStorage;
+      // Localstorage or unknown storage types should fall back to a noop
+      // implementation so callers never receive `null` and can safely call
+      // methods without causing TypeErrors in runtime.
+      return new NoopStorage();
   }
 }
 
