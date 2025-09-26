@@ -2,19 +2,30 @@
 
 import { AdminConfig } from './admin.types';
 import { CloudflareKVStorage } from './cf-kv.db';
+import { importKvrocksImpl, importRedisImpl } from './dynamic-imports';
 import NoopStorage from './noopStorage';
 import { Favorite, IStorage, PlayRecord, SkipConfig } from './types';
 import { UpstashRedisStorage } from './upstash.db';
 
-// storage type 常量: 'localstorage' | 'redis' | 'upstash'，默认 'localstorage'
-const STORAGE_TYPE =
-  (process.env.NEXT_PUBLIC_STORAGE_TYPE as
-    | 'localstorage'
-    | 'redis'
-    | 'upstash'
-    | 'kvrocks'
-    | 'cf-kv'
-    | undefined) || 'localstorage';
+// 运行时安全读取 storage type，避免在模块顶层使用 `process` 导致 Edge 静态检测报错
+function getStorageType():
+  | 'localstorage'
+  | 'redis'
+  | 'upstash'
+  | 'kvrocks'
+  | 'cf-kv' {
+  const proc = (globalThis as any)['process'];
+  const env = proc?.env ?? (globalThis as any)['__NEXT_DATA__']?.env ?? {};
+  return (
+    (env.NEXT_PUBLIC_STORAGE_TYPE as
+      | 'localstorage'
+      | 'redis'
+      | 'upstash'
+      | 'kvrocks'
+      | 'cf-kv'
+      | undefined) || 'localstorage'
+  );
+}
 
 let kvNamespace: KVNamespace | null = null;
 
@@ -22,8 +33,46 @@ export function setKVNamespace(kv: KVNamespace) {
   kvNamespace = kv;
 }
 
+// Node-only: 尝试获取底层原始存储实现（例如 redis/kvrocks）的客户端实例
+// 这个函数会在运行时检查是否在 Node 环境中，并按需动态导入 Node-only 模块。
+// 在 Edge 环境中或在构建期间会返回 null，避免将 Node-only 代码打包进 Edge 函数。
+export async function getRawStorageClient(): Promise<unknown | null> {
+  try {
+    // 使用 bracket 访问避免静态分析识别出 Node 专用符号
+    const proc = (globalThis as any)['process'];
+    if (proc && proc.release && proc.release.name === 'node') {
+      const STORAGE_TYPE = getStorageType();
+      // 根据配置的存储类型动态导入对应实现
+      if (STORAGE_TYPE === 'redis') {
+        const mod = await importRedisImpl();
+        return (
+          (mod &&
+            ((mod as any).redisClient ||
+              (mod as any).RedisStorage ||
+              (mod as any).default)) ||
+          null
+        );
+      }
+      if (STORAGE_TYPE === 'kvrocks') {
+        const mod = await importKvrocksImpl();
+        return (
+          (mod &&
+            ((mod as any).kvrocksClient ||
+              (mod as any).KvrocksStorage ||
+              (mod as any).default)) ||
+          null
+        );
+      }
+    }
+  } catch (err) {
+    console.warn('getRawStorageClient 动态导入失败或不可用:', err);
+  }
+  return null;
+}
+
 // 创建存储实例（异步，延迟导入 Node-only 模块）
 async function createStorageAsync(): Promise<IStorage> {
+  const STORAGE_TYPE = getStorageType();
   switch (STORAGE_TYPE) {
     case 'redis': {
       // Redis backend uses Node-only APIs and is not compatible with Edge builds.
@@ -56,7 +105,9 @@ async function getStorageAsync(): Promise<IStorage> {
 
   // 在 Next.js build 阶段，process.env.NEXT_PUBLIC_STORAGE_TYPE 可能是 'cf-kv'
   // 但此时 kvNamespace 还未被初始化，所以我们返回一个 NoopStorage，避免抛出
-  if (process.env.npm_lifecycle_event === 'build' && STORAGE_TYPE === 'cf-kv') {
+  const proc = (globalThis as any)['process'];
+  const lifecycle = proc?.env?.npm_lifecycle_event;
+  if (lifecycle === 'build' && getStorageType() === 'cf-kv') {
     return new NoopStorage();
   }
 

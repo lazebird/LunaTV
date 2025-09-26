@@ -5,7 +5,7 @@ import pako from 'pako';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { SimpleCrypto } from '@/lib/crypto';
-import { db } from '@/lib/db';
+import { db, getRawStorageClient } from '@/lib/db';
 import { uint8ArrayToBase64 } from '@/lib/encoding';
 import { CURRENT_VERSION } from '@/lib/version';
 
@@ -129,13 +129,30 @@ export async function POST(req: NextRequest) {
 // 辅助函数：获取用户密码（通过数据库直接访问）
 async function getUserPassword(username: string): Promise<string | null> {
   try {
-    // 使用 Redis 存储的直接访问方法
-    const storage = (db as any).storage;
-    if (storage && typeof storage.client?.get === 'function') {
-      const passwordKey = `u:${username}:pwd`;
-      const password = await storage.client.get(passwordKey);
-      return password;
+    // 优先尝试通过底层原始存储客户端（仅在 Node 环境可用）直接读取密码
+    const rawClient = await getRawStorageClient();
+    if (rawClient) {
+      try {
+        const rc: any = rawClient;
+        // 常见的 redis 客户端实例可能暴露 get 方法
+        if (typeof rc.get === 'function') {
+          const k = `u:${username}:pwd`;
+          const v = await rc.get(k);
+          return v ?? null;
+        }
+
+        // 如果导入的是模块而非实例，尝试从模块中获取 client
+        if (rc.client && typeof rc.client.get === 'function') {
+          const k = `u:${username}:pwd`;
+          const v = await rc.client.get(k);
+          return v ?? null;
+        }
+      } catch (e) {
+        console.warn('通过原始存储客户端读取密码失败:', e);
+      }
     }
+
+    // 无法直接访问底层客户端时，无法安全获取原始密码，返回 null
     return null;
   } catch (error) {
     console.error(`获取用户 ${username} 密码失败:`, error);
