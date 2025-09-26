@@ -5,5 +5,11 @@ kv_namespaces = [
   { binding = "LUNATV_KV", id = "0e5a71eeb4ed4028991860be64db207e" }, # TODO: Replace with your KV namespace ID
 ]
 
+# For Cloudflare Pages, point pages_build_output_dir at the directory produced by the
+# build/adapter step. next-on-pages / vercel adapter writes static assets to
+# `.vercel/output/static` (and the worker into `.vercel/output/static/_worker.js`).
+pages_build_output_dir = ".vercel/output/static"
+
 [site]
-bucket = ".next"
+# point the site bucket to the adapter output
+bucket = ".vercel/output/static"
