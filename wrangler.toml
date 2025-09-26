@@ -1,15 +1,12 @@
 name = "lunatv"
-workers_dev = true
 
+# Note: For Cloudflare Pages projects, `workers_dev` and `[site]` sections are not
+# supported by the Pages configuration. Removing them prevents wrangler validation
+# errors like: "Configuration file for Pages projects does not support \"workers_dev\""
+# Keep pages_build_output_dir so the Pages build knows where the adapter wrote files.
 kv_namespaces = [
   { binding = "LUNATV_KV", id = "0e5a71eeb4ed4028991860be64db207e" }, # TODO: Replace with your KV namespace ID
 ]
 
-# For Cloudflare Pages, point pages_build_output_dir at the directory produced by the
-# build/adapter step. next-on-pages / vercel adapter writes static assets to
-# `.vercel/output/static` (and the worker into `.vercel/output/static/_worker.js`).
+# The output dir produced by next-on-pages / vercel adapter
 pages_build_output_dir = ".vercel/output/static"
-
-[site]
-# point the site bucket to the adapter output
-bucket = ".vercel/output/static"
