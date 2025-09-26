@@ -17,7 +17,7 @@
     "gen:manifest": "node scripts/generate-manifest.js",
     "postbuild": "echo 'Build completed - sitemap generation disabled'",
     "prepare": "husky install",
-    "pages:build": "pnpm gen:manifest && next build && node scripts/remove-large-assets.js && pnpx @cloudflare/next-on-pages --experimental-minify"
+    "pages:build": "pnpm gen:manifest && next build && node scripts/trim-worker-output.js && node scripts/remove-large-assets.js && pnpx @cloudflare/next-on-pages --experimental-minify"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
